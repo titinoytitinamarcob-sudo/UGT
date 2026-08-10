@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Inicio — OKMAKEY → UGT</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#e8e5de}
+#okmakey,#indexPage{position:fixed;inset:0;width:100%;height:100%;border:0;display:block}
+#okmakey{z-index:10;background:#e8e5de}
+#indexPage{z-index:1;opacity:0;visibility:hidden;background:#e8e5de}
+
+/* Transición: dos hojas/puertas que se abren desde el centro */
+#doorTransition{position:fixed;inset:0;z-index:30;pointer-events:none;visibility:hidden}
+#doorTransition .door{
+  position:absolute;top:-2%;bottom:-2%;width:52%;
+  background:linear-gradient(90deg,#202020 0%,#343434 38%,#171717 100%);
+  box-shadow:0 0 45px rgba(0,0,0,.5);
+  will-change:transform;
+}
+#doorTransition .left{left:-2%;transform-origin:left center}
+#doorTransition .right{right:-2%;transform-origin:right center;background:linear-gradient(90deg,#171717 0%,#343434 62%,#202020 100%)}
+#doorTransition .left:after,#doorTransition .right:after{
+  content:"";position:absolute;top:0;bottom:0;width:7px;background:rgba(255,255,255,.08);box-shadow:0 0 18px rgba(255,255,255,.08)
+}
+#doorTransition .left:after{right:0}.right:after{left:0}
+#doorTransition.active{visibility:visible}
+#doorTransition.active .left{animation:doorLeft 1100ms cubic-bezier(.65,0,.2,1) forwards}
+#doorTransition.active .right{animation:doorRight 1100ms cubic-bezier(.65,0,.2,1) forwards}
+@keyframes doorLeft{0%{transform:perspective(1200px) rotateY(0deg)}100%{transform:perspective(1200px) rotateY(-92deg)}}
+@keyframes doorRight{0%{transform:perspective(1200px) rotateY(0deg)}100%{transform:perspective(1200px) rotateY(92deg)}}
+
+#indexPage.reveal{animation:indexReveal 450ms ease-out forwards}
+@keyframes indexReveal{from{opacity:0;transform:scale(1.01)}to{opacity:1;transform:scale(1)}}
+</style>
+</head>
+<body>
+  <iframe id="okmakey" src="okmakey_rapido.html" title="Animación OKMAKEY"></iframe>
+  <iframe id="indexPage" src="index (3).html" title="Página principal"></iframe>
+  <div id="doorTransition" aria-hidden="true"><div class="door left"></div><div class="door right"></div></div>
+<script>
+(function(){
+  const ok=document.getElementById('okmakey');
+  const index=document.getElementById('indexPage');
+  const door=document.getElementById('doorTransition');
+  let done=false;
+  // La versión rápida de OKMAKEY termina su derrumbe aproximadamente a los 6.8 s.
+  const START_TRANSITION=8800;
+  function goToIndex(){
+    if(done)return; done=true;
+    door.classList.remove('active'); void door.offsetWidth; door.classList.add('active');
+    // Las puertas se abren mientras revelan el index que ya está cargado detrás.
+    setTimeout(()=>{
+      ok.style.visibility='hidden';
+      ok.style.pointerEvents='none';
+      index.style.visibility='visible';
+      index.classList.add('reveal');
+    },120);
+    setTimeout(()=>{door.style.visibility='hidden'},1150);
+  }
+  ok.addEventListener('load',()=>setTimeout(goToIndex,START_TRANSITION),{once:true});
+  setTimeout(goToIndex,START_TRANSITION+700);
+})();
+</script>
+</body>
+</html>
