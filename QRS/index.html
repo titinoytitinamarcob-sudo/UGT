@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><style>
+@font-face {
+  font-family: "Optimistic";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("/fonts/OptimisticAI_VF_Optimized.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Optimistic Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/OptimisticMono_W_TextRegular.woff2") format("woff2");
+}
+:where(html) {
+  font-family: "Optimistic", system-ui, sans-serif;
+}
+:where(code, pre, kbd, samp) {
+  font-family: "Optimistic Mono", ui-monospace, monospace;
+}
+</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Todos tus QR...</title>
+  <style>
+    /* Fuentes personalizadas */
+    @font-face {
+      font-family: 'Love Storya';
+      src: local('Love Storya'), local('LoveStorya');
+    }
+
+    @font-face {
+      font-family: 'La Beauties';
+      src: local('La Beauties'), local('LaBeauties');
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      min-height: 100vh;
+      background: url('318778.png') no-repeat center center fixed;
+      background-size: cover;
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding: 40px 20px;
+    }
+
+    /* Capa para oscurecer suavemente el fondo */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.55);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+      overflow: hidden;
+    }
+
+    /* Título: entra suave por la izquierda */
+    header h1 {
+      font-family: 'Love Storya', 'Brush Script MT', cursive;
+      font-size: 3.5rem;
+      color: #ffffff;
+      margin-bottom: 5px;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+      font-weight: normal;
+      opacity: 0;
+      animation: slideInLeft 2.2s cubic-bezier(0.25, 1, 0.5, 1) 1.5s forwards;
+    }
+
+    /* Subtítulo: desplazado bastante más hacia la derecha */
+    header p {
+      font-family: 'La Beauties', 'Dancing Script', cursive;
+      font-size: 1.5rem;
+      color: #000000;
+      display: block;
+      margin-left: 280px; /* Desplazamiento marcado hacia la derecha */
+      opacity: 0;
+      animation: slideInRight 2.2s cubic-bezier(0.25, 1, 0.5, 1) 1.5s forwards;
+      text-shadow: 
+        -1px -1px 0 #ffffff,
+         1px -1px 0 #ffffff,
+        -1px  1px 0 #ffffff,
+         1px  1px 0 #ffffff,
+         0px  0px 12px rgba(255, 255, 255, 0.9),
+         0px  0px 20px rgba(255, 255, 255, 0.7);
+    }
+
+    /* KEYFRAMES ENTRADA TEXTOS */
+    @keyframes slideInLeft {
+      0% {
+        opacity: 0;
+        transform: translateX(-200px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes slideInRight {
+      0% {
+        opacity: 0;
+        transform: translateX(200px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    /* Grid principal: 3 columnas */
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 30px;
+      padding: 20px 10px 60px 10px;
+      justify-items: center;
+      min-height: 800px;
+    }
+
+    @media (max-width: 900px) {
+      header p {
+        margin-left: 0; /* Centrado automático en móviles/tablets */
+      }
+      .gallery-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 600px) {
+      .gallery-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Estilo del marco Polaroid */
+    .polaroid-card {
+      background: #ffffff;
+      padding: 15px 15px 20px 15px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4), 0 2px 5px rgba(0,0,0,0.2);
+      border-radius: 4px;
+      width: 100%;
+      max-width: 310px;
+      position: relative;
+      opacity: 0;
+      transform-origin: center center;
+      transition: box-shadow 0.3s ease;
+    }
+
+    .polaroid-card:hover {
+      z-index: 100 !important;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+    }
+
+    /* Hover en estado repartido */
+    .gallery-grid.dealt .polaroid-card {
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
+    }
+
+    .gallery-grid.dealt .polaroid-card:hover {
+      transform: scale(1.06) rotate(0deg) !important;
+    }
+
+    .img-wrapper {
+      width: 100%;
+      height: 210px;
+      overflow: hidden;
+      background-color: #f0f0f0;
+      border: 1px solid #eee;
+      margin-bottom: 12px;
+    }
+
+    .img-wrapper img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .caption {
+      text-align: center;
+      font-size: 0.95rem;
+      color: #333;
+      font-weight: 600;
+      margin-bottom: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .download-btn {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      background-color: #e50914;
+      color: white;
+      text-align: center;
+      text-decoration: none;
+      font-weight: bold;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      transition: background-color 0.2s ease, transform 0.1s ease;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    .download-btn:hover {
+      background-color: #b20710;
+    }
+
+    .download-btn:active {
+      transform: scale(0.98);
+    }
+
+    /* KEYFRAMES ANIMACIÓN POLAROID */
+    @keyframes dropToStack {
+      0% {
+        opacity: 0;
+        transform: translate(var(--center-x), -100vh) rotate(var(--random-stack-rot)) scale(1.1);
+      }
+      70% {
+        opacity: 1;
+        transform: translate(var(--center-x), calc(var(--center-y) + 15px)) rotate(var(--random-stack-rot)) scale(1);
+      }
+      100% {
+        opacity: 1;
+        transform: translate(var(--center-x), var(--center-y)) rotate(var(--random-stack-rot)) scale(1);
+      }
+    }
+
+    @keyframes shuffleLeft {
+      0% {
+        transform: translate(var(--center-x), var(--center-y)) rotate(var(--random-stack-rot));
+      }
+      50% {
+        transform: translate(calc(var(--center-x) - 150px), var(--center-y)) rotate(-15deg) scale(1.05);
+      }
+      100% {
+        transform: translate(var(--center-x), var(--center-y)) rotate(var(--random-stack-rot));
+      }
+    }
+
+    @keyframes shuffleRight {
+      0% {
+        transform: translate(var(--center-x), var(--center-y)) rotate(var(--random-stack-rot));
+      }
+      50% {
+        transform: translate(calc(var(--center-x) + 150px), var(--center-y)) rotate(15deg) scale(1.05);
+      }
+      100% {
+        transform: translate(var(--center-x), var(--center-y)) rotate(var(--random-stack-rot));
+      }
+    }
+
+    .anim-drop {
+      animation: dropToStack 0.85s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+    }
+
+    .anim-shuffle-left {
+      animation: shuffleLeft 1.0s ease-in-out forwards;
+    }
+
+    .anim-shuffle-right {
+      animation: shuffleRight 1.0s ease-in-out forwards;
+    }
+
+
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>Todos tus QR...</h1>
+      <p>Descarga el que necesites</p>
+    </header>
+
+    <div class="gallery-grid" id="gallery">
+      <!-- Las Polaroid se generan automáticamente: 1 por cada PNG, JPG o JPEG del directorio -->
+    </div>
+  </div>
+
+  <script>
+    /*
+     * GALERÍA DINÁMICA DESDE GITHUB
+     * --------------------------------
+     * El HTML y los PNG deben estar en el mismo directorio.
+     * Al abrir la página se consulta GitHub y se crea UNA Polaroid
+     * por cada archivo .png que exista en ese directorio.
+     *
+     * Para un GitHub Pages normal (*.github.io) no hace falta configurar
+     * OWNER/REPO: se detectan automáticamente a partir de la URL.
+     *
+     * Si usas dominio personalizado, indica aquí el propietario y repo:
+     *
+     * const GITHUB_OWNER = 'tu-usuario';
+     * const GITHUB_REPO  = 'tu-repositorio';
+     * const GITHUB_BRANCH = 'main';
+     */
+    /*
+     * GALERÍA DINÁMICA PARA GITHUB PAGES
+     * ===================================
+     * 1 PNG = 1 Polaroid.
+     *
+     * GITHUB:
+     * El HTML y los PNG deben estar en el mismo directorio.
+     * Se consulta la API de GitHub SIN usar la caché del navegador.
+     *
+     */
+
+    /*
+     * GALERÍA DINÁMICA PARA GITHUB PAGES
+     * ===================================
+     *
+     * La página NO consulta la API de GitHub desde el navegador.
+     * Esto evita errores "Failed to fetch" / CORS / límites de la API.
+     *
+     * GitHub Actions genera automáticamente "imagenes.json" cada vez
+     * que se añade, elimina o modifica un PNG/JPG/JPEG del mismo directorio.
+     *
+     * Resultado:
+     *   1 archivo .png  = 1 Polaroid
+     *   1 archivo .jpg  = 1 Polaroid
+     *   1 archivo .jpeg = 1 Polaroid
+     */
+
+    let images = [];
+
+    function titleFromFilename(filename) {
+      return filename
+        .replace(/\.(png|jpe?g)$/i, '')
+        .replace(/[_-]+/g, ' ')
+        .trim();
+    }
+
+    async function discoverImageFiles() {
+      /*
+       * imagenes.json se sirve desde el MISMO GitHub Pages que el HTML.
+       * No hay CORS y no depende de api.github.com.
+       */
+      const manifestUrl =
+        `${new URL('imagenes.json', window.location.href).href}` +
+        `?v=${Date.now()}`;
+
+      const response = await fetch(manifestUrl, {
+        method: 'GET',
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `No se pudo cargar imagenes.json (HTTP ${response.status}). ` +
+          `Si acabas de subir el HTML, espera a que termine GitHub Actions.`
+        );
+      }
+
+      const data = await response.json();
+
+      if (!Array.isArray(data)) {
+        throw new Error('imagenes.json no contiene una lista válida.');
+      }
+
+      const imageFiles = data
+        .filter(file =>
+          typeof file === 'string' &&
+          /\.(png|jpe?g)$/i.test(file)
+        )
+        .sort((a, b) =>
+          a.localeCompare(b, 'es', {
+            numeric: true,
+            sensitivity: 'base'
+          })
+        );
+
+      console.log(
+        `[Galería] ${imageFiles.length} imagen(es) encontrada(s):`,
+        imageFiles
+      );
+
+      return imageFiles.map(filename => ({
+        src: filename.split('/').map(encodeURIComponent).join('/') + `?v=${Date.now()}`,
+        title: titleFromFilename(filename),
+        filename
+      }));
+    }
+
+    const galleryContainer = document.getElementById('gallery');
+    let cards = [];
+
+    async function loadGitHubGallery() {
+      try {
+        images = await discoverImageFiles();
+        createGallery();
+
+        if (images.length) {
+          setTimeout(startCardSequence, 200);
+        }
+      } catch (error) {
+        console.error('[Galería]', error);
+
+        galleryContainer.innerHTML = `
+          <div style="
+            grid-column: 1 / -1;
+            color: white;
+            text-align: center;
+            padding: 30px;
+            font-size: 1.05rem;
+            background: rgba(0,0,0,.55);
+            border-radius: 10px;
+          ">
+            No se han podido cargar las imágenes.
+            <br>
+            <small>${error.message}</small>
+          </div>
+        `;
+      }
+    }
+
+    function createGallery() {
+      galleryContainer.innerHTML = '';
+      cards = [];
+
+      images.forEach((imgData, index) => {
+        const card = document.createElement('div');
+        card.className = 'polaroid-card';
+        card.dataset.index = index;
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'img-wrapper';
+
+        const image = document.createElement('img');
+        image.src = imgData.src;
+        image.alt = imgData.title;
+        image.loading = index < 6 ? 'eager' : 'lazy';
+        image.decoding = 'async';
+
+        wrapper.appendChild(image);
+
+        const caption = document.createElement('div');
+        caption.className = 'caption';
+        caption.textContent = imgData.title;
+
+        const download = document.createElement('a');
+        download.href = imgData.src;
+        download.download = imgData.filename;
+        download.className = 'download-btn';
+        download.textContent = '📥 Descargar';
+
+        card.appendChild(wrapper);
+        card.appendChild(caption);
+        card.appendChild(download);
+
+        galleryContainer.appendChild(card);
+        cards.push(card);
+      });
+    }
+
+    function startCardSequence() {
+      galleryContainer.classList.remove('dealt');
+      
+      const containerRect = galleryContainer.getBoundingClientRect();
+
+      cards.forEach((card, i) => {
+        card.className = 'polaroid-card';
+        card.style.transition = 'none';
+        card.style.opacity = '0';
+
+        const cardRect = card.getBoundingClientRect();
+        
+        const centerX = (containerRect.width / 2) - (cardRect.width / 2) - (card.offsetLeft - galleryContainer.offsetLeft);
+        const centerY = -10 - (card.offsetTop - galleryContainer.offsetTop);
+
+        const randomStackRot = (Math.random() * 8 - 4).toFixed(1) + 'deg';
+        const finalRot = (Math.random() * 10 - 5).toFixed(1) + 'deg';
+
+        card.style.setProperty('--center-x', `${centerX}px`);
+        card.style.setProperty('--center-y', `${centerY}px`);
+        card.style.setProperty('--random-stack-rot', randomStackRot);
+        card.style.setProperty('--final-rot', finalRot);
+        card.style.zIndex = i + 1;
+      });
+
+      cards.forEach((card, i) => {
+        setTimeout(() => {
+          card.classList.add('anim-drop');
+        }, i * 120);
+      });
+
+      const finishDropTime = (cards.length * 120) + 850;
+
+      setTimeout(() => {
+        cards.forEach((card, i) => {
+          card.classList.remove('anim-drop');
+          card.style.opacity = '1';
+          card.style.transform = `translate(var(--center-x), var(--center-y)) rotate(var(--random-stack-rot))`;
+
+          if (i % 2 === 0) {
+            card.classList.add('anim-shuffle-left');
+          } else {
+            card.classList.add('anim-shuffle-right');
+          }
+        });
+      }, finishDropTime);
+
+      const finishShuffleTime = finishDropTime + 1100;
+
+      setTimeout(() => {
+        cards.forEach((card) => {
+          card.classList.remove('anim-shuffle-left', 'anim-shuffle-right');
+          card.style.transition = 'transform 1.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.8s ease';
+          card.style.transform = `translate(0, 0) rotate(var(--final-rot))`;
+          card.style.zIndex = 1;
+        });
+
+        setTimeout(() => {
+          galleryContainer.classList.add('dealt');
+        }, 1400);
+
+      }, finishShuffleTime);
+    }
+</script>
+<script>(function(){var loc=location.href.replace(/#.*$/,"");var ATTR_NAMES=["data-product-id","data-productid","data-product_id","product-id","productid","product_id","data-source-entity-id","source-entity-id","source_entity_id","data-product","data-metadata","data-meta"];var DATASET_KEYS=["productId","productid","product_id","sourceEntityId","sourceentityid","source_entity_id","product","metadata","meta"];function readProductId(value){if(typeof value!=="string"||value.length===0)return null;if(/^[0-9]{6,}$/.test(value))return value;var match=value.match(/(?:product(?:_|-)?id|source(?:_|-)?entity(?:_|-)?id)["'=:\s]+([0-9]{6,})/i);return match?match[1]:null}function extractProductId(start){for(var node=start;node&&node!==document.body;node=node.parentElement){for(var i=0;i<ATTR_NAMES.length;i++){var attrValue=node.getAttribute&&node.getAttribute(ATTR_NAMES[i]);var attrProductId=readProductId(attrValue);if(attrProductId)return attrProductId}var dataset=node.dataset||null;if(dataset){for(var j=0;j<DATASET_KEYS.length;j++){var dataValue=dataset[DATASET_KEYS[j]];var dataProductId=readProductId(dataValue);if(dataProductId)return dataProductId}}}return null}function isInlineMediaSlotElement(node){return !!(node&&node.getAttribute&&node.getAttribute("data-clippy-inline-media-slot")!==null)}function findInlineMediaSlot(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(isInlineMediaSlotElement(node))return node}return null}function readInlineMediaUrl(node){if(!node)return null;return node.getAttribute&&((node.getAttribute("data-clippy-inline-media-url")||node.getAttribute("data-url")||node.getAttribute("data_url")))||node.href||null}function stripHash(url){return String(url).replace(/#.*$/,"")}function urlsMatch(a,b){if(!a||!b)return false;try{return stripHash(new URL(a,loc).href)===stripHash(new URL(b,loc).href)}catch(_){return stripHash(a)===stripHash(b)}}function isFirstPartyReelUrl(value){try{var url=new URL(value,loc);if(url.protocol!=="https:")return false;var host=url.hostname.toLowerCase();var supported=host==="instagram.com"||host.endsWith(".instagram.com")||host==="facebook.com"||host.endsWith(".facebook.com");return supported&&/\/reels?\//i.test(url.pathname)}catch(_){return false}}function isInlineMediaUrlClick(node,href){var slot=findInlineMediaSlot(node);if(!slot)return false;var slotUrl=readInlineMediaUrl(slot);if(slotUrl)return urlsMatch(href,slotUrl);return isFirstPartyReelUrl(href)}function findDataHref(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(node.getAttribute){var href=node.getAttribute("data-href")||node.getAttribute("data-url");if(href)return{href:href,node:node}}}return null}var nativeOpen=window.open;window.open=function(url){if(parent!==window&&typeof url==="string"&&/^https?:\/\//.test(url)){parent.postMessage({type:"ecto:usercontent-link-click",href:url},"*");return null}return nativeOpen?nativeOpen.apply(window,arguments):null};document.addEventListener("click",function(e){var target=e.target instanceof Element?e.target:null;if(!target)return;if(parent===window)return;var a=target.closest?target.closest("a[href]"):null;if(a&&a.href&&/^https?:\/\//.test(a.href)&&a.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(a,a.href))return;var productId=extractProductId(target)||extractProductId(a);if(productId){e.preventDefault();parent.postMessage({type:"ecto-artifact-link-click",productId:productId},"*");return}e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:a.href},"*");return}var dataHref=findDataHref(target);if(dataHref&&/^https?:\/\//.test(dataHref.href)&&dataHref.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(dataHref.node,dataHref.href))return;e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:dataHref.href},"*")}},true)})();</script><script>(function(){var FOCUS_TYPE="ecto:artifact-focus-request";var CLOSE_TYPE="ecto:artifact-close-request";function focusArtifactDocument(){var body=document.body;if(!body)return;try{window.focus();}catch(e){}if(!body.hasAttribute("tabindex"))body.setAttribute("tabindex","-1");try{body.focus({preventScroll:true});}catch(e){try{body.focus();}catch(e2){}}}window.addEventListener("message",function(event){if(event.source!==window.parent)return;var data=event.data;if(!data||typeof data!=="object"||data.type!==FOCUS_TYPE)return;if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",focusArtifactDocument,{once:true});return;}focusArtifactDocument();});window.addEventListener("keydown",function(event){if(event.key!=="Escape")return;window.setTimeout(function(){if(event.defaultPrevented)return;window.parent.postMessage({type:CLOSE_TYPE},"*");},0);});})();</script></body>
+</html>
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadGitHubGallery();
+    });
+
+
