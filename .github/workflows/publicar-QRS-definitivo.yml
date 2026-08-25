@@ -1,0 +1,102 @@
+name: Publicar QRS y actualizar imágenes
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'QRS/**'
+      - '.github/workflows/publicar-QRS-definitivo.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar sitio
+        shell: bash
+        run: |
+          rm -rf _site
+          mkdir -p _site
+          rsync -a --exclude='.git' --exclude='_site' ./ _site/
+
+      - name: Generar QRS/imagenes.json
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          import hashlib
+          from pathlib import Path
+
+          carpeta = Path('_site/QRS')
+          extensiones = {'.png', '.jpg', '.jpeg'}
+
+          fotos = sorted(
+              p for p in carpeta.iterdir()
+              if p.is_file()
+              and p.suffix.lower() in extensiones
+              and p.name.lower() != '318778.png'
+          )
+
+          archivos = [p.name for p in fotos]
+
+          # La versión depende del CONTENIDO real de las fotos.
+          # Así también se detecta sustituir una foto conservando el mismo nombre.
+          h = hashlib.sha256()
+          for p in fotos:
+              h.update(p.name.encode('utf-8'))
+              h.update(b'\0')
+              h.update(hashlib.sha256(p.read_bytes()).digest())
+              h.update(b'\0')
+
+          version = h.hexdigest()[:16]
+
+          # El HTML solo acepta extensiones de imagen, por lo que esta entrada
+          # no se convierte nunca en una Polaroid.
+          manifest = [f'__manifest_version_{version}'] + archivos
+
+          (carpeta / 'imagenes.json').write_text(
+              json.dumps(manifest, ensure_ascii=False, indent=2) + '\n',
+              encoding='utf-8'
+          )
+
+          print(f'Imágenes encontradas: {len(archivos)}')
+          print(f'Versión: {version}')
+          for archivo in archivos:
+              print(f' - {archivo}')
+          PY
+
+      - name: Mostrar manifest generado
+        run: cat _site/QRS/imagenes.json
+
+      - name: Configurar GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Crear artefacto de Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '_site'
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Publicar en GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
