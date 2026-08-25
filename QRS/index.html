@@ -299,7 +299,7 @@
     </header>
 
     <div class="gallery-grid" id="gallery">
-      <!-- Las Polaroid se generan automáticamente: 1 por cada PNG, JPG o JPEG del directorio de GitHub -->
+      <!-- Las Polaroid se generan automáticamente: 1 por cada PNG, JPG o JPEG del directorio -->
     </div>
   </div>
 
@@ -331,63 +331,23 @@
      *
      */
 
-    const GITHUB_OWNER = null;
-    const GITHUB_REPO = null;
-    const GITHUB_BRANCH = 'main';
+    /*
+     * GALERÍA DINÁMICA PARA GITHUB PAGES
+     * ===================================
+     *
+     * La página NO consulta la API de GitHub desde el navegador.
+     * Esto evita errores "Failed to fetch" / CORS / límites de la API.
+     *
+     * GitHub Actions genera automáticamente "imagenes.json" cada vez
+     * que se añade, elimina o modifica un PNG/JPG/JPEG del mismo directorio.
+     *
+     * Resultado:
+     *   1 archivo .png  = 1 Polaroid
+     *   1 archivo .jpg  = 1 Polaroid
+     *   1 archivo .jpeg = 1 Polaroid
+     */
 
     let images = [];
-
-    // Formatos admitidos: PNG, JPG y JPEG.
-    function isImageFile(name) {
-      return /\.(png|jpe?g)$/i.test(name);
-    }
-
-    function getGitHubLocation() {
-      const host = window.location.hostname.toLowerCase();
-      const pathParts = window.location.pathname.split('/').filter(Boolean);
-
-      if (GITHUB_OWNER && GITHUB_REPO) {
-        return {
-          owner: GITHUB_OWNER,
-          repo: GITHUB_REPO,
-          branch: GITHUB_BRANCH,
-          directory: pathParts.slice(0, -1).join('/')
-        };
-      }
-
-      if (!host.endsWith('.github.io')) {
-        throw new Error('La página debe estar alojada en GitHub Pages.');
-      }
-
-      const owner = host.slice(0, -'.github.io'.length);
-
-      // https://usuario.github.io/index.html
-      if (
-        pathParts.length === 0 ||
-        (pathParts.length === 1 && /\.html?$/i.test(pathParts[0]))
-      ) {
-        return {
-          owner,
-          repo: `${owner}.github.io`,
-          branch: GITHUB_BRANCH,
-          directory: ''
-        };
-      }
-
-      // https://usuario.github.io/repositorio/index.html
-      const repo = pathParts[0];
-      const last = pathParts[pathParts.length - 1];
-      const hasHtml = /\.html?$/i.test(last);
-
-      return {
-        owner,
-        repo,
-        branch: GITHUB_BRANCH,
-        directory: hasHtml
-          ? pathParts.slice(1, -1).join('/')
-          : pathParts.slice(1).join('/')
-      };
-    }
 
     function titleFromFilename(filename) {
       return filename
@@ -396,66 +356,43 @@
         .trim();
     }
 
-    function rawGitHubUrl(owner, repo, branch, path) {
-      const encodedPath = path
-        .split('/')
-        .map(encodeURIComponent)
-        .join('/');
-
-      return (
-        `https://raw.githubusercontent.com/${encodeURIComponent(owner)}/` +
-        `${encodeURIComponent(repo)}/${encodeURIComponent(branch)}/` +
-        `${encodedPath}`
-      );
-    }
-
     async function discoverImageFiles() {
-      const location = getGitHubLocation();
+      /*
+       * imagenes.json se sirve desde el MISMO GitHub Pages que el HTML.
+       * No hay CORS y no depende de api.github.com.
+       */
+      const manifestUrl =
+        `${new URL('imagenes.json', window.location.href).href}` +
+        `?v=${Date.now()}`;
 
-      const directoryPath = location.directory
-        ? '/' + location.directory
-            .split('/')
-            .map(encodeURIComponent)
-            .join('/')
-        : '';
-
-      const cacheBuster =
-        `${Date.now()}_${Math.random().toString(36).slice(2)}`;
-
-      const apiUrl =
-        `https://api.github.com/repos/${encodeURIComponent(location.owner)}/` +
-        `${encodeURIComponent(location.repo)}/contents${directoryPath}` +
-        `?ref=${encodeURIComponent(location.branch)}&_=${cacheBuster}`;
-
-      console.log('[Galería] Consultando:', apiUrl);
-
-      const response = await fetch(apiUrl, {
+      const response = await fetch(manifestUrl, {
         method: 'GET',
         cache: 'no-store',
         headers: {
-          'Accept': 'application/vnd.github+json',
           'Cache-Control': 'no-cache'
         }
       });
 
       if (!response.ok) {
-        throw new Error(`GitHub API respondió HTTP ${response.status}.`);
+        throw new Error(
+          `No se pudo cargar imagenes.json (HTTP ${response.status}). ` +
+          `Si acabas de subir el HTML, espera a que termine GitHub Actions.`
+        );
       }
 
-      const files = await response.json();
+      const data = await response.json();
 
-      if (!Array.isArray(files)) {
-        throw new Error('GitHub no ha devuelto el contenido del directorio.');
+      if (!Array.isArray(data)) {
+        throw new Error('imagenes.json no contiene una lista válida.');
       }
 
-      const imageFiles = files
+      const imageFiles = data
         .filter(file =>
-          file &&
-          file.type === 'file' &&
-          isImageFile(file.name)
+          typeof file === 'string' &&
+          /\.(png|jpe?g)$/i.test(file)
         )
         .sort((a, b) =>
-          a.name.localeCompare(b.name, 'es', {
+          a.localeCompare(b, 'es', {
             numeric: true,
             sensitivity: 'base'
           })
@@ -463,26 +400,14 @@
 
       console.log(
         `[Galería] ${imageFiles.length} imagen(es) encontrada(s):`,
-        imageFiles.map(file => file.name)
+        imageFiles
       );
 
-      return imageFiles.map(file => {
-        const relativePath = location.directory
-          ? `${location.directory}/${file.name}`
-          : file.name;
-
-        return {
-          src: rawGitHubUrl(
-            location.owner,
-            location.repo,
-            location.branch,
-            relativePath
-          ) + `?_=${cacheBuster}`,
-          title: titleFromFilename(file.name),
-          filename: file.name,
-          githubUrl: file.html_url
-        };
-      });
+      return imageFiles.map(filename => ({
+        src: encodeURI(filename) + `?v=${Date.now()}`,
+        title: titleFromFilename(filename),
+        filename
+      }));
     }
 
     const galleryContainer = document.getElementById('gallery');
@@ -509,7 +434,7 @@
             background: rgba(0,0,0,.55);
             border-radius: 10px;
           ">
-            No se han podido cargar las imágenes de GitHub.
+            No se han podido cargar las imágenes.
             <br>
             <small>${error.message}</small>
           </div>
@@ -619,13 +544,12 @@
 
       }, finishShuffleTime);
     }
-
+</script>
+<script>(function(){var loc=location.href.replace(/#.*$/,"");var ATTR_NAMES=["data-product-id","data-productid","data-product_id","product-id","productid","product_id","data-source-entity-id","source-entity-id","source_entity_id","data-product","data-metadata","data-meta"];var DATASET_KEYS=["productId","productid","product_id","sourceEntityId","sourceentityid","source_entity_id","product","metadata","meta"];function readProductId(value){if(typeof value!=="string"||value.length===0)return null;if(/^[0-9]{6,}$/.test(value))return value;var match=value.match(/(?:product(?:_|-)?id|source(?:_|-)?entity(?:_|-)?id)["'=:\s]+([0-9]{6,})/i);return match?match[1]:null}function extractProductId(start){for(var node=start;node&&node!==document.body;node=node.parentElement){for(var i=0;i<ATTR_NAMES.length;i++){var attrValue=node.getAttribute&&node.getAttribute(ATTR_NAMES[i]);var attrProductId=readProductId(attrValue);if(attrProductId)return attrProductId}var dataset=node.dataset||null;if(dataset){for(var j=0;j<DATASET_KEYS.length;j++){var dataValue=dataset[DATASET_KEYS[j]];var dataProductId=readProductId(dataValue);if(dataProductId)return dataProductId}}}return null}function isInlineMediaSlotElement(node){return !!(node&&node.getAttribute&&node.getAttribute("data-clippy-inline-media-slot")!==null)}function findInlineMediaSlot(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(isInlineMediaSlotElement(node))return node}return null}function readInlineMediaUrl(node){if(!node)return null;return node.getAttribute&&((node.getAttribute("data-clippy-inline-media-url")||node.getAttribute("data-url")||node.getAttribute("data_url")))||node.href||null}function stripHash(url){return String(url).replace(/#.*$/,"")}function urlsMatch(a,b){if(!a||!b)return false;try{return stripHash(new URL(a,loc).href)===stripHash(new URL(b,loc).href)}catch(_){return stripHash(a)===stripHash(b)}}function isFirstPartyReelUrl(value){try{var url=new URL(value,loc);if(url.protocol!=="https:")return false;var host=url.hostname.toLowerCase();var supported=host==="instagram.com"||host.endsWith(".instagram.com")||host==="facebook.com"||host.endsWith(".facebook.com");return supported&&/\/reels?\//i.test(url.pathname)}catch(_){return false}}function isInlineMediaUrlClick(node,href){var slot=findInlineMediaSlot(node);if(!slot)return false;var slotUrl=readInlineMediaUrl(slot);if(slotUrl)return urlsMatch(href,slotUrl);return isFirstPartyReelUrl(href)}function findDataHref(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(node.getAttribute){var href=node.getAttribute("data-href")||node.getAttribute("data-url");if(href)return{href:href,node:node}}}return null}var nativeOpen=window.open;window.open=function(url){if(parent!==window&&typeof url==="string"&&/^https?:\/\//.test(url)){parent.postMessage({type:"ecto:usercontent-link-click",href:url},"*");return null}return nativeOpen?nativeOpen.apply(window,arguments):null};document.addEventListener("click",function(e){var target=e.target instanceof Element?e.target:null;if(!target)return;if(parent===window)return;var a=target.closest?target.closest("a[href]"):null;if(a&&a.href&&/^https?:\/\//.test(a.href)&&a.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(a,a.href))return;var productId=extractProductId(target)||extractProductId(a);if(productId){e.preventDefault();parent.postMessage({type:"ecto-artifact-link-click",productId:productId},"*");return}e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:a.href},"*");return}var dataHref=findDataHref(target);if(dataHref&&/^https?:\/\//.test(dataHref.href)&&dataHref.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(dataHref.node,dataHref.href))return;e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:dataHref.href},"*")}},true)})();</script><script>(function(){var FOCUS_TYPE="ecto:artifact-focus-request";var CLOSE_TYPE="ecto:artifact-close-request";function focusArtifactDocument(){var body=document.body;if(!body)return;try{window.focus();}catch(e){}if(!body.hasAttribute("tabindex"))body.setAttribute("tabindex","-1");try{body.focus({preventScroll:true});}catch(e){try{body.focus();}catch(e2){}}}window.addEventListener("message",function(event){if(event.source!==window.parent)return;var data=event.data;if(!data||typeof data!=="object"||data.type!==FOCUS_TYPE)return;if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",focusArtifactDocument,{once:true});return;}focusArtifactDocument();});window.addEventListener("keydown",function(event){if(event.key!=="Escape")return;window.setTimeout(function(){if(event.defaultPrevented)return;window.parent.postMessage({type:CLOSE_TYPE},"*");},0);});})();</script></body>
+</html>
 
     window.addEventListener('DOMContentLoaded', () => {
       loadGitHubGallery();
     });
 
-  </script>
-<script>(function(){var loc=location.href.replace(/#.*$/,"");var ATTR_NAMES=["data-product-id","data-productid","data-product_id","product-id","productid","product_id","data-source-entity-id","source-entity-id","source_entity_id","data-product","data-metadata","data-meta"];var DATASET_KEYS=["productId","productid","product_id","sourceEntityId","sourceentityid","source_entity_id","product","metadata","meta"];function readProductId(value){if(typeof value!=="string"||value.length===0)return null;if(/^[0-9]{6,}$/.test(value))return value;var match=value.match(/(?:product(?:_|-)?id|source(?:_|-)?entity(?:_|-)?id)["'=:\s]+([0-9]{6,})/i);return match?match[1]:null}function extractProductId(start){for(var node=start;node&&node!==document.body;node=node.parentElement){for(var i=0;i<ATTR_NAMES.length;i++){var attrValue=node.getAttribute&&node.getAttribute(ATTR_NAMES[i]);var attrProductId=readProductId(attrValue);if(attrProductId)return attrProductId}var dataset=node.dataset||null;if(dataset){for(var j=0;j<DATASET_KEYS.length;j++){var dataValue=dataset[DATASET_KEYS[j]];var dataProductId=readProductId(dataValue);if(dataProductId)return dataProductId}}}return null}function isInlineMediaSlotElement(node){return !!(node&&node.getAttribute&&node.getAttribute("data-clippy-inline-media-slot")!==null)}function findInlineMediaSlot(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(isInlineMediaSlotElement(node))return node}return null}function readInlineMediaUrl(node){if(!node)return null;return node.getAttribute&&((node.getAttribute("data-clippy-inline-media-url")||node.getAttribute("data-url")||node.getAttribute("data_url")))||node.href||null}function stripHash(url){return String(url).replace(/#.*$/,"")}function urlsMatch(a,b){if(!a||!b)return false;try{return stripHash(new URL(a,loc).href)===stripHash(new URL(b,loc).href)}catch(_){return stripHash(a)===stripHash(b)}}function isFirstPartyReelUrl(value){try{var url=new URL(value,loc);if(url.protocol!=="https:")return false;var host=url.hostname.toLowerCase();var supported=host==="instagram.com"||host.endsWith(".instagram.com")||host==="facebook.com"||host.endsWith(".facebook.com");return supported&&/\/reels?\//i.test(url.pathname)}catch(_){return false}}function isInlineMediaUrlClick(node,href){var slot=findInlineMediaSlot(node);if(!slot)return false;var slotUrl=readInlineMediaUrl(slot);if(slotUrl)return urlsMatch(href,slotUrl);return isFirstPartyReelUrl(href)}function findDataHref(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(node.getAttribute){var href=node.getAttribute("data-href")||node.getAttribute("data-url");if(href)return{href:href,node:node}}}return null}var nativeOpen=window.open;window.open=function(url){if(parent!==window&&typeof url==="string"&&/^https?:\/\//.test(url)){parent.postMessage({type:"ecto:usercontent-link-click",href:url},"*");return null}return nativeOpen?nativeOpen.apply(window,arguments):null};document.addEventListener("click",function(e){var target=e.target instanceof Element?e.target:null;if(!target)return;if(parent===window)return;var a=target.closest?target.closest("a[href]"):null;if(a&&a.href&&/^https?:\/\//.test(a.href)&&a.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(a,a.href))return;var productId=extractProductId(target)||extractProductId(a);if(productId){e.preventDefault();parent.postMessage({type:"ecto-artifact-link-click",productId:productId},"*");return}e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:a.href},"*");return}var dataHref=findDataHref(target);if(dataHref&&/^https?:\/\//.test(dataHref.href)&&dataHref.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(dataHref.node,dataHref.href))return;e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:dataHref.href},"*")}},true)})();</script><script>(function(){var FOCUS_TYPE="ecto:artifact-focus-request";var CLOSE_TYPE="ecto:artifact-close-request";function focusArtifactDocument(){var body=document.body;if(!body)return;try{window.focus();}catch(e){}if(!body.hasAttribute("tabindex"))body.setAttribute("tabindex","-1");try{body.focus({preventScroll:true});}catch(e){try{body.focus();}catch(e2){}}}window.addEventListener("message",function(event){if(event.source!==window.parent)return;var data=event.data;if(!data||typeof data!=="object"||data.type!==FOCUS_TYPE)return;if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",focusArtifactDocument,{once:true});return;}focusArtifactDocument();});window.addEventListener("keydown",function(event){if(event.key!=="Escape")return;window.setTimeout(function(){if(event.defaultPrevented)return;window.parent.postMessage({type:CLOSE_TYPE},"*");},0);});})();</script></body>
-</html>
 
