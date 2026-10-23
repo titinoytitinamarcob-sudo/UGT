@@ -1,0 +1,12 @@
+CONSULTA MATRÍCULAS — ACTUALIZACIÓN DE DISEÑO Y NOMBRE
+
+Cambios incluidos:
+- Nombre de la aplicación: Consulta Matrículas.
+- Imagen de matrículas integrada como fondo de la interfaz.
+- Estilo actualizado con panel translúcido y botones adaptados al fondo.
+- Aviso de instalación: «¡Ya está instalada! Búscala en aplicaciones por Consulta Matrículas».
+- Al abrir el icono instalado, se redirige directamente a la página oficial de consulta de matrículas, sin volver a mostrar la página de nuestro servicio.
+- Se actualiza la caché del service worker para que el navegador detecte la nueva versión.
+
+PUBLICACIÓN
+Sube todos los archivos de esta carpeta a la misma ubicación de tu web. Si la aplicación ya estaba instalada, puede ser necesario cerrar y abrir la app o desinstalar la versión anterior e instalarla de nuevo para actualizar nombre, fondo e icono. El aviso aparece tras aceptar la instalación. Al abrir el icono instalado, se abre directamente la página oficial de consulta de matrículas. La creación del icono depende del navegador/dispositivo.

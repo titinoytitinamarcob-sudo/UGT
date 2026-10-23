@@ -1,0 +1,15 @@
+{
+  "id": "./index.html",
+  "name": "Consulta Matrículas",
+  "short_name": "Consulta Matrículas",
+  "description": "Acceso rápido a la consulta oficial de matrículas.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#142238",
+  "theme_color": "#12345a",
+  "icons": [
+    {"src":"./mamerto-192.png","sizes":"192x192","type":"image/png","purpose":"any"},
+    {"src":"./mamerto-512.png","sizes":"512x512","type":"image/png","purpose":"any"}
+  ]
+}
