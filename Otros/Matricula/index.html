@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta property="og:type" content="website">
+<meta property="og:title" content="ĆØŇŞỮŁŦΔ Đ€ ΜΔŦŘƗĆỮŁΔŞ>
+<meta property="og:description" content="... 𝐀 𝒖𝑛 𝐬𝒐𝑙𝐨 𝑪𝐿𝐈𝑪𝐾.">
+<meta property="og:image" content="https://titinoytitinamarcob-sudo.github.io/UGT/Otros/Matricula/consulta_matriculas.webp>
+<meta property="og:image:type" content="image/webp">
+<meta property="og:image:secure_url" content="https://titinoytitinamarcob-sudo.github.io/UGT/Otros/Matricula/consulta_matriculas.webp">
+<meta property="og:url" content="https://titinoytitinamarcob-sudo.github.io/UGT/Otros/Matricula/index.html">
+<meta property="og:image:width" content="1536">
+<meta property="og:image:height" content="1024">
+<meta property="og:image:alt" content="Consulta Matricula">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="ĆØŇŞỮŁŦΔ Đ€ ΜΔŦŘƗĆỮŁΔŞ">
+<meta name="twitter:description" content="... 𝓾𝓰𝓽 𝓼𝓲𝓮𝓶𝓹𝓻𝓮 𝓪 𝓽𝓾 𝓵𝓪𝓭𝓸">
+<meta name="twitter:image" content="https://titinoytitinamarcob-sudo.github.io/UGT/Otros/Matricula/consulta_matriculas.webp">
+<meta name="theme-color" content="#e30613">
+<title>Solicitud de unión · Grupo de UGT</title>
+<meta name="theme-color" content="#12345a">
+<meta name="description" content="Consulta Matrículas: acceso rápido a la consulta oficial de matrículas">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="./mamerto-192.png">
+<link rel="apple-touch-icon" href="./mamerto-192.png">
+<title>Consulta Matrículas</title>
+<style>
+:root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#172033;background:#142238}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:20px;background:linear-gradient(135deg,rgba(8,22,43,.48),rgba(10,36,66,.66)),url('./fondo-matriculas.webp') center/cover fixed no-repeat}
+main{width:min(100%,460px);background:rgba(255,255,255,.94);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.65);border-radius:26px;padding:clamp(22px,5vw,32px);box-shadow:0 18px 55px rgba(0,0,0,.3);text-align:center}
+.logo{width:116px;height:116px;object-fit:contain;filter:drop-shadow(0 5px 10px rgba(0,0,0,.12))}
+h1{margin:10px 0 6px;font-size:clamp(1.8rem,7vw,2.15rem);letter-spacing:-.04em;color:#102d50}
+p{line-height:1.5;color:#4c596c}
+button,.btn{display:block;width:100%;border:0;border-radius:14px;padding:15px 18px;font-size:1rem;font-weight:750;text-decoration:none;cursor:pointer;margin-top:12px;transition:transform .15s,box-shadow .15s}
+button{background:linear-gradient(135deg,#164b80,#102d50);color:#fff;box-shadow:0 7px 16px rgba(18,52,90,.22)}
+.btn{background:#e5edf7;color:#12345a;border:1px solid #cbd9e9}
+button:active,.btn:active{transform:scale(.985)}
+button:disabled{cursor:default}
+#status{display:none;background:#fff7df;border:1px solid #f0d98e;padding:14px;border-radius:12px;text-align:left;margin-top:14px;color:#574719;line-height:1.5;overflow-wrap:anywhere}
+#status ol{padding-left:22px}#status p{color:#574719}
+#status.installed{display:block;background:#fff0f0;border:2px solid #ff0000;color:#ff0000;font-weight:800;text-align:center;animation:installed-flash 1.5s steps(1,end) infinite}
+#status.installed strong{color:#ff0000}
+@keyframes installed-flash{0%,49%{opacity:1;visibility:visible}50%,74%{opacity:.2;visibility:visible}75%,100%{opacity:1;visibility:visible}}
+@media(prefers-reduced-motion:reduce){#status.installed{animation:none;opacity:1}}
+small{display:block;margin-top:18px;color:#758195;line-height:1.45}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+<img class="logo" src="./mamerto-512.png" alt="Icono de Consulta Matrículas">
+<h1>Consulta Matrículas</h1>
+<p>Acceso rápido a la consulta oficial de matrículas.</p>
+<button id="install">Instalar aplicación</button>
+<a class="btn" href="https://apps.fomento.gob.es/crgt/servlet/ServletController?modulo=datosconsulta&amp;accion=inicio&amp;lang=es&amp;estilo=default">Consultar matrícula</a>
+<div id="status" role="status" aria-live="polite"></div>
+<small>Después de instalar, si el icono no aparece en el escritorio/pantalla de inicio, consulta las instrucciones.</small>
+</main>
+<script>
+(() => {
+ const btn=document.getElementById('install'), status=document.getElementById('status');
+ const OFFICIAL_URL='https://apps.fomento.gob.es/crgt/servlet/ServletController?modulo=datosconsulta&accion=inicio&lang=es&estilo=default';
+ let deferredPrompt=null;
+ const standalone=()=>window.matchMedia('(display-mode: standalone)').matches ||
+   window.matchMedia('(display-mode: fullscreen)').matches || window.navigator.standalone===true;
+ const show=(html,installed=false)=>{status.innerHTML=html;status.classList.toggle('installed',installed);status.style.display='block';};
+ const isIOS=()=>/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+ // Al abrir el icono instalado, ir directamente a la web oficial de consulta.
+ if(standalone()){ window.location.replace(OFFICIAL_URL); return; }
+ function instructions(){
+   if(isIOS()){
+     show('<strong>Para añadir Consulta Matrículas a la pantalla de inicio:</strong><ol><li>Abre esta página en Safari.</li><li>Pulsa Compartir (cuadrado con flecha hacia arriba).</li><li>Elige «Añadir a pantalla de inicio».</li><li>Pulsa «Añadir» para confirmar.</li></ol>');
+   }else if(/android/i.test(navigator.userAgent)){
+     show('<strong>Para instalar y colocar el icono:</strong><ol><li>Si aparece una ventana de instalación, confirma «Instalar».</li><li>Después, vuelve a la pantalla de inicio y busca Consulta Matrículas en la lista de aplicaciones.</li><li>Si no aparece en el escritorio, mantén pulsado el icono Consulta Matrículas en la lista de aplicaciones y arrástralo a la pantalla de inicio.</li></ol><p>Android no permite que una página web coloque automáticamente un icono en el escritorio; ese último paso lo controla el móvil.</p>');
+   }else{
+     show('<strong>Para añadir Consulta Matrículas:</strong><ol><li>Abre el menú del navegador.</li><li>Busca «Instalar aplicación» o «Añadir a pantalla de inicio».</li><li>Confirma la instalación.</li></ol>');
+   }
+ }
+ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;});
+ btn.addEventListener('click',async()=>{
+     if(deferredPrompt){
+     const prompt=deferredPrompt;deferredPrompt=null;
+     try{
+       await prompt.prompt();
+       const choice=await prompt.userChoice;
+       if(choice?.outcome==='accepted'){
+         show('<strong>¡Ya está instalada!</strong> Búscala en aplicaciones por Consulta Matrículas.',true);
+       }else{
+         show('La instalación se canceló. Puedes volver a intentarlo desde este botón o desde el menú ⋮ de Chrome.');
+       }
+     }catch(_){instructions();}
+   }else{instructions();}
+ });
+ window.addEventListener('appinstalled',()=>{
+   btn.textContent='Consulta Matrículas instalada';btn.disabled=true;
+   show('<strong>¡Ya está instalada!</strong> Búscala en aplicaciones por Consulta Matrículas.',true);
+ });
+})();
+</script>
+</body>
+</html>
